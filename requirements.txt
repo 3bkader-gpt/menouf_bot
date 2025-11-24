@@ -1,0 +1,6 @@
+# Runtime requirements for Uploader Bot
+python-telegram-bot==22.5
+firebase-admin==6.5.0
+streamlit==1.28.0
+python-dotenv==1.0.0
+cachetools==5.3.3

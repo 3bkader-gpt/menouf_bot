@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+*.log
+
+# Local credentials and secrets
+.env
+firebase-credentials.json
+.streamlit/
+
+# VSCode / IDE
+.idea/
+.vscode/
+
