@@ -229,7 +229,7 @@ async def show_programs_menu(update: Update, context: ContextTypes.DEFAULT_TYPE)
     """Render the top-level program selection menu - Program-Centric."""
     query = update.callback_query
     if query:
-    await query.answer()
+        await query.answer()
         target_message = query.message
     else:
         target_message = update.message
