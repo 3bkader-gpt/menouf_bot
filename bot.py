@@ -12,9 +12,11 @@ import logging
 import os
 import asyncio
 import uuid
+import threading
 from collections import defaultdict
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+from flask import Flask
 
 # Telegram imports
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InlineQueryResultCachedDocument
@@ -99,8 +101,8 @@ def create_navigation_handler(
     """Factory function to create navigation handlers with shared logic."""
     
     async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        query = update.callback_query
-        await query.answer()
+    query = update.callback_query
+    await query.answer()
         
         try:
             # 1. Parse the new selection from callback data
@@ -154,16 +156,16 @@ def create_navigation_handler(
                 back_callback = back_callback_template
             
             # Add navigation buttons
-            keyboard.append([
+        keyboard.append([
                 InlineKeyboardButton(S.BTN_BACK, callback_data=back_callback),
                 InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")
-            ])
-            
+        ])
+        
             # 6. Build breadcrumb text
             text = breadcrumb_template.format(**path, prompt=prompt)
             
             # 7. Send response
-            await query.edit_message_text(
+        await query.edit_message_text(
                 text=text,
                 reply_markup=InlineKeyboardMarkup(keyboard),
                 parse_mode="Markdown"
@@ -173,9 +175,9 @@ def create_navigation_handler(
             
         except (KeyError, ValueError) as e:
             logging.error(f"Error in {key_name}_handler: {e}")
-            await query.edit_message_text(
+        await query.edit_message_text(
                 S.GENERIC_ERROR,
-                reply_markup=InlineKeyboardMarkup([
+            reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")]
                 ])
             )
@@ -227,7 +229,7 @@ async def show_programs_menu(update: Update, context: ContextTypes.DEFAULT_TYPE)
     """Render the top-level program selection menu - Program-Centric."""
     query = update.callback_query
     if query:
-        await query.answer()
+    await query.answer()
         target_message = query.message
     else:
         target_message = update.message
@@ -245,24 +247,24 @@ async def show_programs_menu(update: Update, context: ContextTypes.DEFAULT_TYPE)
             ])
         )
         return SELECT_PROGRAM
-
+    
     keyboard = [
         [InlineKeyboardButton(option, callback_data=f"program:{option}")]
         for option in programs
     ]
     keyboard.append([InlineKeyboardButton(S.SEARCH, callback_data="search_start")])
-
+    
     prompt = "اختر القسم/التخصص"
     if query:
-        await query.edit_message_text(
+    await query.edit_message_text(
             prompt,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
     elif target_message:
         await target_message.reply_text(
             prompt,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
     return SELECT_PROGRAM
 
@@ -292,13 +294,13 @@ async def lecture_selected_handler(update: Update, context: ContextTypes.DEFAULT
         
         # Build breadcrumb text
         breadcrumb_text = S.BREADCRUMB_LECTURE.format(program=path['program'], term=path['term'], subject=path['subject'], lecture=path['lecture'])
-        
-        if not files:
-            keyboard = [[
+    
+    if not files:
+        keyboard = [[
                 InlineKeyboardButton(S.BTN_BACK, callback_data=f"subject:{subject}"),
                 InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")
-            ]]
-            await query.edit_message_text(
+        ]]
+        await query.edit_message_text(
                 text=breadcrumb_text + S.NO_FILES_AVAILABLE,
                 reply_markup=InlineKeyboardMarkup(keyboard),
                 parse_mode="Markdown"
@@ -333,15 +335,15 @@ async def lecture_selected_handler(update: Update, context: ContextTypes.DEFAULT
             keyboard.append(button_row)
         
         # Add Back + Main Menu buttons on their own row
-        keyboard.append([
+    keyboard.append([
             InlineKeyboardButton(S.BTN_BACK, callback_data=f"subject:{subject}"),
             InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")
-        ])
+    ])
         
         # Combine breadcrumb and cards
         text = breadcrumb_text + S.FILES_AVAILABLE + cards_text
-        
-        await query.edit_message_text(
+    
+    await query.edit_message_text(
             text=text,
             reply_markup=InlineKeyboardMarkup(keyboard),
             parse_mode="Markdown"
@@ -656,16 +658,38 @@ def register_handlers(app):
         (filters.Document.ALL | filters.VIDEO | filters.AUDIO) & filters.Chat(chat_id=TELEGRAM_ADMIN_CHANNEL_ID_INT),
         mailbox_handler
     ))
-    
+
     # Add conversation handler
     app.add_handler(conv_handler)
-    
+
     # Add text search handler (must be after conversation handler)
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_search))
 
 
+def start_health_check_server():
+    """Start Flask server for health check (used by UptimeRobot to keep bot alive)."""
+    flask_app = Flask(__name__)
+    
+    @flask_app.route('/')
+    def health_check():
+        return {"status": "ok", "bot": "running"}, 200
+    
+    @flask_app.route('/health')
+    def health():
+        return {"status": "healthy", "bot": "online"}, 200
+    
+    port = int(os.getenv("PORT", 5000))
+    flask_app.run(host='0.0.0.0', port=port, debug=False)
+
+
 def main() -> None:
-init_firebase(FIREBASE_KEY_PATH, FIREBASE_KEY_JSON)
+    init_firebase(FIREBASE_KEY_PATH, FIREBASE_KEY_JSON)
+    
+    # Start health check server in background thread
+    health_thread = threading.Thread(target=start_health_check_server, daemon=True)
+    health_thread.start()
+    logging.info("Health check server started on port 5000")
+    
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     register_handlers(app)
     print("Bot is starting...")
