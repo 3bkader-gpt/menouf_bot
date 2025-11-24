@@ -256,15 +256,15 @@ async def show_programs_menu(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     prompt = "اختر القسم/التخصص"
     if query:
-    await query.edit_message_text(
+        await query.edit_message_text(
             prompt,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
     elif target_message:
         await target_message.reply_text(
             prompt,
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
     return SELECT_PROGRAM
 
@@ -294,13 +294,13 @@ async def lecture_selected_handler(update: Update, context: ContextTypes.DEFAULT
         
         # Build breadcrumb text
         breadcrumb_text = S.BREADCRUMB_LECTURE.format(program=path['program'], term=path['term'], subject=path['subject'], lecture=path['lecture'])
-    
-    if not files:
-        keyboard = [[
+        
+        if not files:
+            keyboard = [[
                 InlineKeyboardButton(S.BTN_BACK, callback_data=f"subject:{subject}"),
                 InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")
-        ]]
-        await query.edit_message_text(
+            ]]
+            await query.edit_message_text(
                 text=breadcrumb_text + S.NO_FILES_AVAILABLE,
                 reply_markup=InlineKeyboardMarkup(keyboard),
                 parse_mode="Markdown"
@@ -335,15 +335,15 @@ async def lecture_selected_handler(update: Update, context: ContextTypes.DEFAULT
             keyboard.append(button_row)
         
         # Add Back + Main Menu buttons on their own row
-    keyboard.append([
+        keyboard.append([
             InlineKeyboardButton(S.BTN_BACK, callback_data=f"subject:{subject}"),
             InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")
-    ])
+        ])
         
         # Combine breadcrumb and cards
         text = breadcrumb_text + S.FILES_AVAILABLE + cards_text
-    
-    await query.edit_message_text(
+        
+        await query.edit_message_text(
             text=text,
             reply_markup=InlineKeyboardMarkup(keyboard),
             parse_mode="Markdown"
