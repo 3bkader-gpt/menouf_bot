@@ -60,7 +60,7 @@
 
 | المتغير | القيمة | ملاحظات |
 |---------|--------|---------|
-| `TELEGRAM_TOKEN` | `8411333724:AAFM9KDgEXmHxfvZ3K4wZlY3Zo3BU9v0544` | توكن البوت |
+| `TELEGRAM_TOKEN` | `8463136615:AAHR3wZB5a72F_kS8VLb1lMz7S-NA_9momA` | توكن البوت |
 | `TELEGRAM_ADMIN_CHANNEL_ID` | `-1003070315274` | معرف القناة |
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | (انسخ الـ JSON كامل) | انظر الملاحظة أدناه |
 | `ADMIN_PASSWORD` | `MyS3curePass!23` | كلمة سر لوحة التحكم |

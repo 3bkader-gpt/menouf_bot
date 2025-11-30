@@ -78,10 +78,9 @@ TELEGRAM_ADMIN_CHANNEL_ID_INT = int(TELEGRAM_ADMIN_CHANNEL_ID)
 
 # ----------------- Conversation States -----------------
 SELECT_PROGRAM = 1
-SELECT_TERM = 2
-SELECT_SUBJECT = 3
-SELECT_LECTURE = 4
-SELECT_FILE = 5
+SELECT_SUBJECT = 2
+SELECT_LECTURE = 3
+SELECT_FILE = 4
 
 # Rate limit: 3 reports per user per hour
 _report_tracker = defaultdict(list)
@@ -94,13 +93,13 @@ WELCOME_PHOTO_URL = "https://i.imgur.com/gjl440T.png"
 # ----------------- Handler Factory Pattern -----------------
 
 def create_navigation_handler(
-    key_name: str,          # e.g., 'year', 'program'
+    key_name: str,          # e.g., 'program', 'subject'
     next_state: int,
     breadcrumb_template: str,
     prompt: str,
-    taxonomy_doc_key: str,  # The key to retrieve the list from (e.g., 'programs', 'terms')
+    taxonomy_doc_key: str,  # The key to retrieve the list from (e.g., 'subjects', 'lectures')
     back_callback_template: str,     # Template for the back button callback
-    use_compound_key: bool = False  # Whether to use compound keys like "year_program"
+    use_compound_key: bool = False  # Whether to use compound keys like "program_subject"
 ):
     """Factory function to create navigation handlers with shared logic."""
     
@@ -124,9 +123,9 @@ def create_navigation_handler(
             
             # 4. Build the key for taxonomy lookup
             if use_compound_key:
-                # Build compound key based on current path
+                # Build compound key based on current path (without term)
                 key_parts = []
-                order = ['program', 'term', 'subject']
+                order = ['program', 'subject']
                 for k in order:
                     if k in path:
                         key_parts.append(path[k])
@@ -144,7 +143,6 @@ def create_navigation_handler(
             # Map taxonomy keys to callback prefixes
             callback_map = {
                 S.TAX_DOC_PROGRAMS: "program",
-                S.TAX_DOC_TERMS: "term", 
                 S.TAX_DOC_SUBJECTS: "subject",
                 S.TAX_DOC_LECTURES: "lecture"
             }
@@ -285,7 +283,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def lecture_selected_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show files with File Cards."""
+    """Show files with File Cards - fetches from all terms."""
     query = update.callback_query
     await query.answer()
     
@@ -293,14 +291,34 @@ async def lecture_selected_handler(update: Update, context: ContextTypes.DEFAULT
         lecture = query.data.split(":", 1)[1]
         path = context.user_data['path']
         program = path['program']
-        term = path['term']
         subject = path['subject']
         path['lecture'] = lecture
     
-        files = await get_files(program, term, subject, lecture)
+        # Query files without term filter - get from all terms
+        query_ref = db.collection('files').where(filter=FieldFilter('program', '==', program)).where(filter=FieldFilter('subject', '==', subject)).where(filter=FieldFilter('lecture', '==', lecture))
+        docs = await asyncio.to_thread(query_ref.get)
+        
+        files = []
+        for doc in docs:
+            data = doc.to_dict()
+            if not data.get('file_id'):
+                continue
+            original_name = data.get('original_name', 'file.unknown')
+            if '.' in original_name:
+                file_type = original_name.split('.')[-1].upper()
+            else:
+                file_type = 'FILE'
+            
+            files.append({
+                'display_name': data.get('display_name') or 'ملف',
+                'file_id': data.get('file_id'),
+                'id': doc.id,
+                'original_name': original_name,
+                'file_type': file_type
+            })
         
         # Build breadcrumb text
-        breadcrumb_text = S.BREADCRUMB_LECTURE.format(program=path['program'], term=path['term'], subject=path['subject'], lecture=path['lecture'])
+        breadcrumb_text = S.BREADCRUMB_LECTURE.format(program=path['program'], subject=path['subject'], lecture=path['lecture'])
         
         if not files:
             keyboard = [[
@@ -498,7 +516,7 @@ async def subject_search_handler(update: Update, context: ContextTypes.DEFAULT_T
 
 
 async def program_subject_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle program selection for a subject - show terms."""
+    """Handle program selection for a subject - show lectures directly."""
     query = update.callback_query
     await query.answer()
     
@@ -508,27 +526,73 @@ async def program_subject_handler(update: Update, context: ContextTypes.DEFAULT_
     
     context.user_data['path'] = {'program': program, 'subject': subject}
     
-    # Get terms for this program
-    terms_doc = await get_taxonomy_doc(S.TAX_DOC_TERMS)
-    terms = resolve_taxonomy_options(terms_doc, program)
+    # Get lectures for this program/subject (from all terms)
+    lectures_doc = await get_taxonomy_doc(S.TAX_DOC_LECTURES)
     
-    if not terms:
-        # Fallback to default terms
-        terms = ["اول", "تاني"]
+    # Try to find lectures with different key patterns
+    lectures = set()
+    for key, values in lectures_doc.items():
+        if isinstance(values, list) and subject in key and program in key:
+            lectures.update(values)
+    
+    if not lectures:
+        # Try to get files directly (without lecture filter)
+        try:
+            query_ref = db.collection('files').where(filter=FieldFilter('program', '==', program)).where(filter=FieldFilter('subject', '==', subject))
+            docs = await asyncio.to_thread(query_ref.get)
+            files = [{'id': doc.id, 'display_name': doc.get('display_name') or doc.get('original_name') or "ملف", 'file_id': doc.get('file_id'), 'file_type': 'FILE'} for doc in docs if doc.get('file_id')]
+            
+            if files:
+                # Show files directly
+                context.user_data['path']['lecture'] = ""
+                breadcrumb_text = S.BREADCRUMB_LECTURE.format(program=program, subject=subject, lecture="")
+                cards_text = ""
+                keyboard = []
+                
+                for i, file in enumerate(files):
+                    file_ext = file.get('file_type', 'FILE')
+                    cards_text += f"\n---\n**{i+1}️⃣ {file['display_name']}** `[{file_ext}]`\n"
+                    button_row = [
+                        InlineKeyboardButton(S.DOWNLOAD_FILE.format(number=i+1), callback_data=f"file:{file['id']}"),
+                        InlineKeyboardButton(S.REPORT_PROBLEM, callback_data=f"report:{file['id']}")
+                    ]
+                    keyboard.append(button_row)
+                
+                keyboard.append([InlineKeyboardButton(S.BTN_BACK, callback_data=f"subject_search:{subject}")])
+                keyboard.append([InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")])
+                
+                await query.edit_message_text(
+                    text=breadcrumb_text + S.FILES_AVAILABLE + cards_text,
+                    reply_markup=InlineKeyboardMarkup(keyboard),
+                    parse_mode="Markdown"
+                )
+                return SELECT_FILE
+        except Exception as e:
+            logging.error(f"Error getting files: {e}")
+        
+        await query.edit_message_text(
+            f"{program} > المادة: *{subject}*\n\n❌ لا توجد محاضرات أو ملفات متاحة.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(S.BTN_BACK, callback_data=f"subject_search:{subject}")],
+                [InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")]
+            ]),
+            parse_mode="Markdown"
+        )
+        return SELECT_LECTURE
     
     keyboard = [
-        [InlineKeyboardButton(term, callback_data=f"term_subject:{program}:{term}:{subject}")]
-        for term in sorted(terms)
+        [InlineKeyboardButton(lecture, callback_data=f"lecture:{lecture}")]
+        for lecture in sorted(lectures)
     ]
     keyboard.append([InlineKeyboardButton(S.BTN_BACK, callback_data=f"subject_search:{subject}")])
     keyboard.append([InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")])
     
     await query.edit_message_text(
-        f"{program} > المادة: *{subject}*\n\nاختر الترم:",
+        f"{program} > المادة: *{subject}*\n\nاختر المحاضرة:",
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode="Markdown"
     )
-    return SELECT_TERM
+    return SELECT_LECTURE
 
 
 async def term_subject_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -751,21 +815,11 @@ def register_handlers(app):
     # Create reusable navigation handlers using the factory pattern
     program_handler = create_navigation_handler(
         key_name='program',
-        next_state=SELECT_TERM,
-        breadcrumb_template=S.BREADCRUMB_PROGRAM,
-        prompt=S.SELECT_TERM,
-        taxonomy_doc_key=S.TAX_DOC_TERMS,
-        back_callback_template="main_menu",
-        use_compound_key=True
-    )
-
-    term_handler = create_navigation_handler(
-        key_name='term',
         next_state=SELECT_SUBJECT,
-        breadcrumb_template=S.BREADCRUMB_TERM,
+        breadcrumb_template=S.BREADCRUMB_PROGRAM,
         prompt=S.SELECT_SUBJECT,
         taxonomy_doc_key=S.TAX_DOC_SUBJECTS,
-        back_callback_template="program:{program}",
+        back_callback_template="main_menu",
         use_compound_key=True
     )
 
@@ -775,7 +829,7 @@ def register_handlers(app):
         breadcrumb_template=S.BREADCRUMB_SUBJECT,
         prompt=S.SELECT_LECTURE,
         taxonomy_doc_key=S.TAX_DOC_LECTURES,
-        back_callback_template="term:{term}",
+        back_callback_template="program:{program}",
         use_compound_key=True
     )
 
@@ -789,21 +843,14 @@ def register_handlers(app):
                 CallbackQueryHandler(program_handler, pattern="^program:"),
                 CallbackQueryHandler(main_menu_handler, pattern="^main_menu$"),
             ],
-            SELECT_TERM: [
-                CallbackQueryHandler(term_handler, pattern="^term:"),
-                CallbackQueryHandler(program_handler, pattern="^program:"),
-                CallbackQueryHandler(main_menu_handler, pattern="^main_menu$"),
-            ],
             SELECT_SUBJECT: [
                 CallbackQueryHandler(subject_handler, pattern="^subject:"),
-                CallbackQueryHandler(term_handler, pattern="^term:"),
                 CallbackQueryHandler(program_handler, pattern="^program:"),
                 CallbackQueryHandler(main_menu_handler, pattern="^main_menu$"),
             ],
             SELECT_LECTURE: [
                 CallbackQueryHandler(lecture_selected_handler, pattern="^lecture:"),
                 CallbackQueryHandler(subject_handler, pattern="^subject:"),
-                CallbackQueryHandler(term_handler, pattern="^term:"),
                 CallbackQueryHandler(program_handler, pattern="^program:"),
                 CallbackQueryHandler(main_menu_handler, pattern="^main_menu$"),
             ],
@@ -811,7 +858,6 @@ def register_handlers(app):
                 CallbackQueryHandler(file_selected_handler, pattern="^file:"),
                 CallbackQueryHandler(lecture_selected_handler, pattern="^lecture:"),
                 CallbackQueryHandler(subject_handler, pattern="^subject:"),
-                CallbackQueryHandler(term_handler, pattern="^term:"),
                 CallbackQueryHandler(program_handler, pattern="^program:"),
                 CallbackQueryHandler(main_menu_handler, pattern="^main_menu$"),
             ],
@@ -830,7 +876,6 @@ def register_handlers(app):
     app.add_handler(CallbackQueryHandler(search_start_handler, pattern="^search_start$"))
     app.add_handler(CallbackQueryHandler(subject_search_handler, pattern="^subject_search:"))
     app.add_handler(CallbackQueryHandler(program_subject_handler, pattern="^program_subject:"))
-    app.add_handler(CallbackQueryHandler(term_subject_handler, pattern="^term_subject:"))
     app.add_handler(InlineQueryHandler(inline_query_handler))
     app.add_handler(MessageHandler(
         (filters.Document.ALL | filters.VIDEO | filters.AUDIO) & filters.Chat(chat_id=TELEGRAM_ADMIN_CHANNEL_ID_INT),

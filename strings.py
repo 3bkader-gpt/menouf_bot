@@ -17,18 +17,14 @@ class Strings:
     BACK = "رجوع"
     
     # Navigation prompts
-    SELECT_YEAR = "اختر الفرقة الدراسية 👇"
-    SELECT_PROGRAM = "اختار التخصص 👇"
-    SELECT_TERM = "اختار الترم 👇"
+    SELECT_PROGRAM = "اختار القسم 👇"
     SELECT_SUBJECT = "اختار المادة 👇"
     SELECT_LECTURE = "اختار المحاضرة 👇"
     
     # Breadcrumb templates
-    BREADCRUMB_YEAR = "الفرقة: *{year}*\n\n{prompt}"
-    BREADCRUMB_PROGRAM = "التخصص: *{program}*\n\n{prompt}"
-    BREADCRUMB_TERM = "{program} > الترم: *{term}*\n\n{prompt}"
-    BREADCRUMB_SUBJECT = "{program} > {term} > المادة: *{subject}*\n\n{prompt}"
-    BREADCRUMB_LECTURE = "{program} > {term} > {subject} > المحاضرة: *{lecture}*\n\n"
+    BREADCRUMB_PROGRAM = "القسم: *{program}*\n\n{prompt}"
+    BREADCRUMB_SUBJECT = "{program} > المادة: *{subject}*\n\n{prompt}"
+    BREADCRUMB_LECTURE = "{program} > {subject} > المحاضرة: *{lecture}*\n\n"
     
     # File management
     FILES_AVAILABLE = "📁 **الملفات المتاحة:**"
