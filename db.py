@@ -121,6 +121,30 @@ async def get_files(program: str, term: str, subject: str, lecture: str) -> List
     return results
 
 
+async def search_subjects(query: str) -> List[str]:
+    """Search subjects by name prefix from all programs."""
+    assert db is not None, "Firestore client is not initialized"
+    
+    query = query.lower().strip()
+    if not query:
+        return []
+    
+    # Get all subjects from taxonomy
+    subjects_doc = await get_taxonomy_doc("subjects")
+    if not isinstance(subjects_doc, dict):
+        return []
+    
+    # Collect all unique subjects
+    all_subjects = set()
+    for key, values in subjects_doc.items():
+        if isinstance(values, list):
+            for subject in values:
+                if isinstance(subject, str) and subject.lower().startswith(query):
+                    all_subjects.add(subject)
+    
+    return sorted(list(all_subjects))
+
+
 async def search_files(query: str) -> List[Dict]:
     """Search files by name prefix."""
     assert db is not None, "Firestore client is not initialized"

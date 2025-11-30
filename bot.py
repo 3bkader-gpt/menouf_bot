@@ -41,8 +41,11 @@ from db import (
     get_files,
     get_file_details,
     search_files,
+    search_subjects,
     set_last_uploaded_file,
+    db,
 )
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 # Centralized strings
 from strings import Strings as S
@@ -177,10 +180,10 @@ def create_navigation_handler(
             logging.error(f"Error in {key_name}_handler: {e}")
             await query.edit_message_text(
                 S.GENERIC_ERROR,
-            reply_markup=InlineKeyboardMarkup([
+                reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")]
-            ])
-        )
+                ])
+            )
             return SELECT_PROGRAM
     
     return handler
@@ -263,8 +266,8 @@ async def show_programs_menu(update: Update, context: ContextTypes.DEFAULT_TYPE)
     elif target_message:
         await target_message.reply_text(
             prompt,
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
     return SELECT_PROGRAM
 
@@ -416,23 +419,190 @@ async def search_start_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def handle_text_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Catch text messages as search queries."""
+    """Search for subjects and show results."""
     if not update.message or not update.message.text:
         return
 
     query_text = update.message.text.strip()
-    results = await search_files(query_text)
-    if not results:
+    subjects = await search_subjects(query_text)
+    
+    if not subjects:
         await update.message.reply_text(S.SEARCH_NO_RESULTS)
         return
 
-    await update.message.reply_text(S.SEARCH_RESULTS.format(query=query_text))
+    await update.message.reply_text(f"🔍 النتائج المطابقة لكلمة '{query_text}':")
 
     keyboard = []
-    for f in results:
-        keyboard.append([InlineKeyboardButton(f["display_name"], callback_data=f"file:{f['id']}")])
+    for subject in subjects[:20]:  # Limit to 20 results
+        keyboard.append([InlineKeyboardButton(subject, callback_data=f"subject_search:{subject}")])
     keyboard.append([InlineKeyboardButton(S.MAIN_MENU, callback_data="main_menu")])
-    await update.message.reply_text("", reply_markup=InlineKeyboardMarkup(keyboard))
+    await update.message.reply_text("اختر المادة:", reply_markup=InlineKeyboardMarkup(keyboard))
+
+
+async def subject_search_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle subject selection from search results - show programs/terms for this subject."""
+    query = update.callback_query
+    await query.answer()
+    
+    subject = query.data.split(":", 1)[1]
+    context.user_data['path'] = {'subject': subject}
+    
+    # Get all programs that have this subject
+    subjects_doc = await get_taxonomy_doc(S.TAX_DOC_SUBJECTS)
+    programs_doc = await get_taxonomy_doc(S.TAX_DOC_PROGRAMS)
+    programs = extract_program_list(programs_doc)
+    
+    # Find programs that have this subject
+    matching_programs = []
+    for program in programs:
+        # Check all possible keys for this program
+        for key, values in subjects_doc.items():
+            if isinstance(values, list) and subject in values:
+                # Extract program from key (format: program_term or year_program_term)
+                key_parts = key.split('_')
+                if program in key_parts:
+                    matching_programs.append(program)
+                    break
+    
+    # If no specific programs found, show all programs
+    if not matching_programs:
+        matching_programs = programs
+    
+    if not matching_programs:
+        await query.edit_message_text(
+            f"المادة: *{subject}*\n\n❌ لا توجد أقسام متاحة لهذه المادة.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")]
+            ]),
+            parse_mode="Markdown"
+        )
+        return SELECT_PROGRAM
+    
+    # Show programs for this subject
+    keyboard = [
+        [InlineKeyboardButton(program, callback_data=f"program_subject:{program}:{subject}")]
+        for program in sorted(set(matching_programs))
+    ]
+    keyboard.append([InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")])
+    
+    await query.edit_message_text(
+        f"المادة: *{subject}*\n\nاختر القسم:",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="Markdown"
+    )
+    return SELECT_PROGRAM
+
+
+async def program_subject_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle program selection for a subject - show terms."""
+    query = update.callback_query
+    await query.answer()
+    
+    parts = query.data.split(":")
+    program = parts[1]
+    subject = parts[2]
+    
+    context.user_data['path'] = {'program': program, 'subject': subject}
+    
+    # Get terms for this program
+    terms_doc = await get_taxonomy_doc(S.TAX_DOC_TERMS)
+    terms = resolve_taxonomy_options(terms_doc, program)
+    
+    if not terms:
+        # Fallback to default terms
+        terms = ["اول", "تاني"]
+    
+    keyboard = [
+        [InlineKeyboardButton(term, callback_data=f"term_subject:{program}:{term}:{subject}")]
+        for term in sorted(terms)
+    ]
+    keyboard.append([InlineKeyboardButton(S.BTN_BACK, callback_data=f"subject_search:{subject}")])
+    keyboard.append([InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")])
+    
+    await query.edit_message_text(
+        f"{program} > المادة: *{subject}*\n\nاختر الترم:",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="Markdown"
+    )
+    return SELECT_TERM
+
+
+async def term_subject_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle term selection for a subject - show lectures."""
+    query = update.callback_query
+    await query.answer()
+    
+    parts = query.data.split(":")
+    program = parts[1]
+    term = parts[2]
+    subject = parts[3]
+    
+    context.user_data['path'] = {'program': program, 'term': term, 'subject': subject}
+    
+    # Get lectures for this program/term/subject
+    lectures_doc = await get_taxonomy_doc(S.TAX_DOC_LECTURES)
+    lecture_key = f"{program}_{term}_{subject}"
+    lectures = resolve_taxonomy_options(lectures_doc, lecture_key)
+    
+    if not lectures:
+        # Try to get files directly (without lecture filter)
+        try:
+            # Query files for this program/term/subject
+            query_ref = db.collection('files').where(filter=FieldFilter('program', '==', program)).where(filter=FieldFilter('term', '==', term)).where(filter=FieldFilter('subject', '==', subject))
+            docs = await asyncio.to_thread(query_ref.get)
+            files = [{'id': doc.id, 'display_name': doc.get('display_name') or doc.get('original_name') or "ملف", 'file_id': doc.get('file_id')} for doc in docs if doc.get('file_id')]
+            
+            if files:
+                # Show files directly
+                context.user_data['path']['lecture'] = ""
+                breadcrumb_text = S.BREADCRUMB_LECTURE.format(program=program, term=term, subject=subject, lecture="")
+                cards_text = ""
+                keyboard = []
+                
+                for i, file in enumerate(files):
+                    file_ext = file.get('file_type', 'FILE')
+                    cards_text += f"\n---\n**{i+1}️⃣ {file['display_name']}** `[{file_ext}]`\n"
+                    button_row = [
+                        InlineKeyboardButton(S.DOWNLOAD_FILE.format(number=i+1), callback_data=f"file:{file['id']}"),
+                        InlineKeyboardButton(S.REPORT_PROBLEM, callback_data=f"report:{file['id']}")
+                    ]
+                    keyboard.append(button_row)
+                
+                keyboard.append([InlineKeyboardButton(S.BTN_BACK, callback_data=f"program_subject:{program}:{subject}")])
+                keyboard.append([InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")])
+                
+                await query.edit_message_text(
+                    text=breadcrumb_text + S.FILES_AVAILABLE + cards_text,
+                    reply_markup=InlineKeyboardMarkup(keyboard),
+                    parse_mode="Markdown"
+                )
+                return SELECT_FILE
+        except Exception as e:
+            logging.error(f"Error getting files: {e}")
+        
+        await query.edit_message_text(
+            f"{program} > {term} > المادة: *{subject}*\n\n❌ لا توجد محاضرات أو ملفات متاحة.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(S.BTN_BACK, callback_data=f"program_subject:{program}:{subject}")],
+                [InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")]
+            ]),
+            parse_mode="Markdown"
+        )
+        return SELECT_LECTURE
+    
+    keyboard = [
+        [InlineKeyboardButton(lecture, callback_data=f"lecture:{lecture}")]
+        for lecture in sorted(lectures)
+    ]
+    keyboard.append([InlineKeyboardButton(S.BTN_BACK, callback_data=f"program_subject:{program}:{subject}")])
+    keyboard.append([InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")])
+    
+    await query.edit_message_text(
+        f"{program} > {term} > المادة: *{subject}*\n\nاختر المحاضرة:",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="Markdown"
+    )
+    return SELECT_LECTURE
 
 
 async def mailbox_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -653,6 +823,9 @@ def register_handlers(app):
     # Add global handlers BEFORE conversation handler so they're checked first
     app.add_handler(CallbackQueryHandler(report_file_handler, pattern="^report:"))
     app.add_handler(CallbackQueryHandler(search_start_handler, pattern="^search_start$"))
+    app.add_handler(CallbackQueryHandler(subject_search_handler, pattern="^subject_search:"))
+    app.add_handler(CallbackQueryHandler(program_subject_handler, pattern="^program_subject:"))
+    app.add_handler(CallbackQueryHandler(term_subject_handler, pattern="^term_subject:"))
     app.add_handler(InlineQueryHandler(inline_query_handler))
     app.add_handler(MessageHandler(
         (filters.Document.ALL | filters.VIDEO | filters.AUDIO) & filters.Chat(chat_id=TELEGRAM_ADMIN_CHANNEL_ID_INT),
@@ -705,7 +878,7 @@ def main() -> None:
     
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     register_handlers(app)
-    
+
     # Add error handler
     app.add_error_handler(error_handler)
     
