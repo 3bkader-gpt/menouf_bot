@@ -101,8 +101,8 @@ def create_navigation_handler(
     """Factory function to create navigation handlers with shared logic."""
     
     async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        query = update.callback_query
-        await query.answer()
+    query = update.callback_query
+    await query.answer()
         
         try:
             # 1. Parse the new selection from callback data
@@ -156,31 +156,31 @@ def create_navigation_handler(
                 back_callback = back_callback_template
             
             # Add navigation buttons
-            keyboard.append([
+        keyboard.append([
                 InlineKeyboardButton(S.BTN_BACK, callback_data=back_callback),
                 InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")
-            ])
-            
+        ])
+        
             # 6. Build breadcrumb text
             text = breadcrumb_template.format(**path, prompt=prompt)
             
             # 7. Send response
-            await query.edit_message_text(
+        await query.edit_message_text(
                 text=text,
                 reply_markup=InlineKeyboardMarkup(keyboard),
                 parse_mode="Markdown"
-            )
+        )
             
             return next_state
             
         except (KeyError, ValueError) as e:
             logging.error(f"Error in {key_name}_handler: {e}")
-            await query.edit_message_text(
+        await query.edit_message_text(
                 S.GENERIC_ERROR,
-                reply_markup=InlineKeyboardMarkup([
+            reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")]
-                ])
-            )
+            ])
+        )
             return SELECT_PROGRAM
     
     return handler
@@ -229,13 +229,13 @@ async def show_programs_menu(update: Update, context: ContextTypes.DEFAULT_TYPE)
     """Render the top-level program selection menu - Program-Centric."""
     query = update.callback_query
     if query:
-        await query.answer()
+    await query.answer()
         target_message = query.message
     else:
         target_message = update.message
 
     context.user_data['path'] = {}
-
+    
     taxonomy = await get_taxonomy_doc(S.TAX_DOC_PROGRAMS)
     programs = extract_program_list(taxonomy)
 
@@ -256,15 +256,15 @@ async def show_programs_menu(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     prompt = "اختر القسم/التخصص"
     if query:
-        await query.edit_message_text(
+    await query.edit_message_text(
             prompt,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
     elif target_message:
         await target_message.reply_text(
             prompt,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
     return SELECT_PROGRAM
 
@@ -289,22 +289,22 @@ async def lecture_selected_handler(update: Update, context: ContextTypes.DEFAULT
         term = path['term']
         subject = path['subject']
         path['lecture'] = lecture
-        
+    
         files = await get_files(program, term, subject, lecture)
         
         # Build breadcrumb text
         breadcrumb_text = S.BREADCRUMB_LECTURE.format(program=path['program'], term=path['term'], subject=path['subject'], lecture=path['lecture'])
-        
-        if not files:
-            keyboard = [[
+    
+    if not files:
+        keyboard = [[
                 InlineKeyboardButton(S.BTN_BACK, callback_data=f"subject:{subject}"),
                 InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")
-            ]]
-            await query.edit_message_text(
+        ]]
+        await query.edit_message_text(
                 text=breadcrumb_text + S.NO_FILES_AVAILABLE,
                 reply_markup=InlineKeyboardMarkup(keyboard),
                 parse_mode="Markdown"
-            )
+        )
             return SELECT_FILE
         
         # Build file cards text
@@ -335,15 +335,15 @@ async def lecture_selected_handler(update: Update, context: ContextTypes.DEFAULT
             keyboard.append(button_row)
         
         # Add Back + Main Menu buttons on their own row
-        keyboard.append([
+    keyboard.append([
             InlineKeyboardButton(S.BTN_BACK, callback_data=f"subject:{subject}"),
             InlineKeyboardButton(S.BTN_MAIN_MENU, callback_data="main_menu")
-        ])
+    ])
         
         # Combine breadcrumb and cards
         text = breadcrumb_text + S.FILES_AVAILABLE + cards_text
-        
-        await query.edit_message_text(
+    
+    await query.edit_message_text(
             text=text,
             reply_markup=InlineKeyboardMarkup(keyboard),
             parse_mode="Markdown"
@@ -684,7 +684,7 @@ def start_health_check_server():
 
 def main() -> None:
     init_firebase(FIREBASE_KEY_PATH, FIREBASE_KEY_JSON)
-    
+
     # Start health check server in background thread
     health_thread = threading.Thread(target=start_health_check_server, daemon=True)
     health_thread.start()
