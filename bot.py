@@ -818,6 +818,7 @@ def register_handlers(app):
         ],
         per_user=True,
         per_chat=True,
+        per_message=False,  # Explicitly set to avoid warning
     )
     
     # Add global handlers BEFORE conversation handler so they're checked first
