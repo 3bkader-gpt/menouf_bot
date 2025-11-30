@@ -210,7 +210,7 @@ async def upload_file(file_data: dict, uploaded_file, file_id_input: str) -> str
         raise ValueError("Invalid upload state.")
 
     file_data['file_id'] = final_file_id
-        return await db_module.save_file(file_data)
+    return await db_module.save_file(file_data)
 
 # Dynamic configuration loaded from Firebase
 
@@ -222,7 +222,7 @@ def load_initial_data():
             config_data = asyncio.run(db_module.get_all_taxonomy_config())
             st.session_state.config_data = config_data
             logging.info("Configuration loaded from Firebase")
-    except Exception as e:
+        except Exception as e:
             logging.error(f"Failed to load configuration: {e}")
             # Fallback to minimal defaults
             st.session_state.config_data = {
@@ -991,22 +991,22 @@ def main():
             st.error("يرجى استكمال الحقول التالية: " + ", ".join(missing_fields))
             return
 
-            try:
-                file_data = {
-                    'display_name': display_name,
+        try:
+            file_data = {
+                'display_name': display_name,
                 'original_name': uploaded_file.name if uploaded_file else f"{display_name}.file",
-                    'year': selected_year,
+                'year': selected_year,
                 'program': selected_program if current_rules.get('REQUIRES_PROGRAM', True) else '',
                 'term': selected_term if current_rules.get('REQUIRES_TERM', True) else '',
-                    'subject': selected_subject,
-                    'lecture': lecture
-                }
-                
+                'subject': selected_subject,
+                'lecture': lecture
+            }
+            
             doc_id = asyncio.run(upload_file(file_data, uploaded_file, file_id_value))
-                st.success(f"File uploaded successfully! (ID: {doc_id})")
-            except Exception as e:
-                st.error(f"Upload failed: {str(e)}")
-                logging.exception("Upload error")
+            st.success(f"File uploaded successfully! (ID: {doc_id})")
+        except Exception as e:
+            st.error(f"Upload failed: {str(e)}")
+            logging.exception("Upload error")
 
 if __name__ == "__main__":
     main()
