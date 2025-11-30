@@ -259,7 +259,7 @@ async def show_programs_menu(update: Update, context: ContextTypes.DEFAULT_TYPE)
     ]
     keyboard.append([InlineKeyboardButton(S.SEARCH, callback_data="search_start")])
     
-    prompt = "اختر القسم/التخصص"
+    prompt = S.SELECT_PROGRAM
     if query:
         await query.edit_message_text(
             prompt,
