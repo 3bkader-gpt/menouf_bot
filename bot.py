@@ -207,6 +207,9 @@ def extract_program_list(doc: dict) -> list:
     for program in programs:
         if not program or program in seen:
             continue
+        # Replace "خاص" with "تحكم"
+        if program == "خاص":
+            program = "تحكم"
         seen.add(program)
         deduped.append(program)
     return deduped
@@ -266,8 +269,8 @@ async def show_programs_menu(update: Update, context: ContextTypes.DEFAULT_TYPE)
     elif target_message:
         await target_message.reply_text(
             prompt,
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
     return SELECT_PROGRAM
 
