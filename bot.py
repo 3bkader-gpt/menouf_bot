@@ -13,6 +13,7 @@ import os
 import asyncio
 import uuid
 import threading
+import signal
 from collections import defaultdict
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -872,6 +873,24 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
         logging.error(f"Update {update} caused error {context.error}", exc_info=context.error)
 
 
+# Global variable to track shutdown state
+_shutdown_event = asyncio.Event()
+
+
+async def shutdown_handler(application: Application) -> None:
+    """Gracefully shutdown the bot."""
+    logging.info("Shutdown signal received. Stopping bot gracefully...")
+    
+    # Stop the application
+    await application.stop()
+    await application.shutdown()
+    
+    # Set the shutdown event
+    _shutdown_event.set()
+    
+    logging.info("Bot shutdown complete.")
+
+
 def main() -> None:
     init_firebase(FIREBASE_KEY_PATH, FIREBASE_KEY_JSON)
 
@@ -886,9 +905,32 @@ def main() -> None:
     # Add error handler
     app.add_error_handler(error_handler)
     
+    # Setup signal handlers for graceful shutdown
+    def signal_handler(signum, frame):
+        """Handle shutdown signals."""
+        logging.info(f"Received signal {signum}. Initiating graceful shutdown...")
+        # Stop the application (run_polling handles shutdown internally)
+        try:
+            app.stop()
+        except Exception as e:
+            logging.error(f"Error stopping app: {e}")
+    
+    # Register signal handlers
+    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, signal_handler)
+    
     print("Bot is starting...")
-    # Drop pending updates to avoid conflicts with other instances
-    app.run_polling(drop_pending_updates=True)
+    logging.info("Bot starting with graceful shutdown support...")
+    
+    try:
+        # Drop pending updates to avoid conflicts with other instances
+        app.run_polling(
+            drop_pending_updates=True
+        )
+    except KeyboardInterrupt:
+        logging.info("KeyboardInterrupt received. Shutting down...")
+    finally:
+        logging.info("Bot stopped.")
 
 
 if __name__ == "__main__":
