@@ -32,7 +32,7 @@ from telegram.ext import (
     InlineQueryHandler,
     filters
 )
-from telegram.error import BadRequest
+from telegram.error import BadRequest, Conflict
 
 # Database functions
 from db import (
@@ -682,6 +682,19 @@ def start_health_check_server():
     flask_app.run(host='0.0.0.0', port=port, debug=False)
 
 
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle errors in the bot."""
+    if isinstance(context.error, Conflict):
+        logging.warning(
+            "Conflict error: Another bot instance is running. "
+            "This is normal during deployment. The bot will retry automatically."
+        )
+        # Don't log as error, just wait and retry
+        return
+    else:
+        logging.error(f"Update {update} caused error {context.error}", exc_info=context.error)
+
+
 def main() -> None:
     init_firebase(FIREBASE_KEY_PATH, FIREBASE_KEY_JSON)
 
@@ -692,8 +705,13 @@ def main() -> None:
     
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     register_handlers(app)
+    
+    # Add error handler
+    app.add_error_handler(error_handler)
+    
     print("Bot is starting...")
-    app.run_polling()
+    # Drop pending updates to avoid conflicts with other instances
+    app.run_polling(drop_pending_updates=True)
 
 
 if __name__ == "__main__":
