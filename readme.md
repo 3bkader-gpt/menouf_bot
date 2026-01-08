@@ -3,13 +3,11 @@
 # 🎓 Menouf Bot
 
 ### <p align="center">
-  <kbd>
-    <kbd style="color: #7E3ACE; font-size: 1.4em; font-weight: 600; letter-spacing: 1px;">
-      📱 Telegram Bot for University Services<br/>
-      ✨ Modern & Intuitive Interface<br/>
-      🐍 Built with Python & Telegram API
-    </kbd>
-  </kbd>
+  <span style="color: #7E3ACE; font-size: 2.2em; font-weight: 700; letter-spacing: 2px; line-height: 1.6;">
+    📱 Telegram Bot for University Services<br/>
+    ✨ Modern & Intuitive Interface<br/>
+    🐍 Built with Python & Telegram API
+  </span>
 </p>
 
 [![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
@@ -229,12 +227,10 @@ This project is licensed under the **MIT License**.
 ### 🎉 **Thank you for visiting!**
 
 <p align="center">
-  <kbd>
-    <kbd style="color: #7E3ACE; font-size: 1.1em; font-weight: 500;">
-      🚀 Happy Coding!<br/>
-      🎉 Keep Building Amazing Things!
-    </kbd>
-  </kbd>
+  <span style="color: #7E3ACE; font-size: 1.5em; font-weight: 600;">
+    🚀 Happy Coding!<br/>
+    🎉 Keep Building Amazing Things!
+  </span>
 </p>
 
 </div>
