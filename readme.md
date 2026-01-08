@@ -1,219 +1,227 @@
-# 📚 دليل تشغيل المشروع - Uploader Bot
+<div align="center">
 
-## 🚀 الخطوات السريعة
+# 🎓 Menouf Bot
 
-### 1️⃣ تفعيل البيئة الافتراضية (Virtual Environment)
+### <img src="https://readme-typing-svg.herokuapp.com?font=Roboto+Slab&color=%237E3ACE&size=30&center=true&vCenter=true&width=450&lines=Telegram+Bot+for+University+Services;Modern+%26+Intuitive+Interface;Built+with+Python+%26+Telegram+API" alt="Typing SVG" />
 
-#### على Windows (PowerShell):
-```powershell
-# تفعيل البيئة الافتراضية
-.venv\Scripts\activate
-
-# أو إذا لم تعمل، جرب:
-.\.venv\Scripts\Activate.ps1
-```
-
-#### على Windows (CMD):
-```cmd
-.venv\Scripts\activate.bat
-```
-
-#### على Linux/Mac:
-```bash
-source .venv/bin/activate
-```
-
-**✅ علامة النجاح:** ستظهر `(bot)` في بداية السطر في الـ Terminal.
+[![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Telegram](https://img.shields.io/badge/Telegram-Bot-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://telegram.org/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)](https://github.com/3bkader-gpt/menouf_bot)
 
 ---
 
-### 2️⃣ تثبيت المكتبات المطلوبة
+</div>
+
+## 🌟 Features
+
+<div align="center">
+
+### ✨ **Modern & Intuitive**
+
+| 🎯 **Core Features** | 📊 **Dashboard** | 🔧 **Advanced** |
+|:---:|:---:|:---:|
+| 📚 Subject Search | 📈 Analytics | 🔐 Secure Authentication |
+| 🎓 Program Selection | 📱 Responsive UI | 🗄️ Database Management |
+| 🔍 Quick Navigation | 🎨 Modern Design | 🚀 Easy Deployment |
+
+</div>
+
+### 🚀 **Key Highlights**
+
+- 🎨 **Modern UI/UX** - Beautiful and intuitive user interface
+- ⚡ **Fast & Responsive** - Optimized for performance
+- 🔒 **Secure** - Built with security best practices
+- 📱 **Cross-platform** - Works on all devices
+- 🛠️ **Easy Setup** - Simple installation and configuration
+- 📊 **Dashboard** - Comprehensive admin dashboard with Streamlit
+- 🗄️ **Database** - Robust database management system
+- 🔄 **Auto-updates** - Automatic data synchronization
+
+---
+
+## 📸 Preview
+
+<div align="center">
+
+```python
+# 🎯 Simple & Powerful
+from telegram import Update
+from telegram.ext import Application
+
+# Your bot is ready! 🚀
+```
+
+</div>
+
+---
+
+## 🛠️ Tech Stack
+
+<div align="center">
+
+![Python](https://img.shields.io/badge/-Python-3776AB?style=flat-square&logo=python&logoColor=white)
+![Telegram Bot API](https://img.shields.io/badge/-Telegram%20Bot%20API-2CA5E0?style=flat-square&logo=telegram&logoColor=white)
+![Streamlit](https://img.shields.io/badge/-Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)
+![Firebase](https://img.shields.io/badge/-Firebase-FFCA28?style=flat-square&logo=firebase&logoColor=black)
+![SQLite](https://img.shields.io/badge/-SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white)
+
+</div>
+
+---
+
+## 📦 Installation
+
+### **Prerequisites**
 
 ```bash
+# Make sure you have Python 3.8+ installed
+python --version
+```
+
+### **Quick Start**
+
+```bash
+# 1️⃣ Clone the repository
+git clone https://github.com/3bkader-gpt/menouf_bot.git
+cd menouf_bot
+
+# 2️⃣ Install dependencies
 pip install -r requirements.txt
-```
 
-**ملاحظة:** إذا كانت البيئة الافتراضية مفعلة، سيتم التثبيت داخل `.venv` وليس على النظام.
+# 3️⃣ Configure environment variables
+# Copy streamlit_secrets_template.toml and fill in your credentials
 
----
-
-### 3️⃣ إعداد ملف البيئة (.env)
-
-تأكد من وجود ملف `.env` في المجلد الرئيسي ويحتوي على (اختر أحد طريقتي Firebase):
-
-```env
-TELEGRAM_TOKEN=your_bot_token_here
-TELEGRAM_ADMIN_CHANNEL_ID=your_channel_id_here
-ADMIN_PASSWORD=your_admin_password_here
-# إما تشير لملف الاعتماد:
-FIREBASE_SERVICE_ACCOUNT_KEY_PATH=C:\path\to\firebase-credentials.json
-# أو تضع الـ JSON خاماً:
-# FIREBASE_SERVICE_ACCOUNT_JSON={"type":"service_account",...}
-```
-
----
-
-### 4️⃣ تشغيل المشروع
-
-#### تشغيل Dashboard (لوحة التحكم):
-```bash
-streamlit run dashboard.py
-```
-
-**✅ النتيجة:** سيفتح المتصفح تلقائياً على `http://localhost:8501`
-
-#### تشغيل Bot (البوت):
-```bash
-python bot.py
-```
-
-**✅ علامة النجاح:** ستظهر رسالة `Bot is starting...` في الـ Terminal.
-
----
-
-## 📋 الخطوات الكاملة (من الصفر)
-
-### إنشاء البيئة الافتراضية (إذا لم تكن موجودة):
-
-```bash
-# إنشاء البيئة الافتراضية
-python -m venv .venv
-
-# تفعيلها
-.venv\Scripts\activate  # Windows
-# أو
-source .venv/bin/activate  # Linux/Mac
-
-# تثبيت المكتبات
-pip install -r requirements.txt
-```
-
----
-
-## ☁️ النشر على Streamlit Community Cloud
-
-1. احفظ الكود في مستودع GitHub عام (أو خاص مع خطة مدفوعة).
-2. من https://streamlit.io/cloud سجّل الدخول بحساب GitHub.
-3. اختر “New app” ثم حدّد المستودع، الفرع (مثل `main`) وملف التشغيل `dashboard.py`.
-4. في إعدادات التطبيق، الصق قيمة `requirements.txt` (يُقرأ تلقائياً) وأضف أسرارك من تبويب **Secrets** بالصيغة:
-   ```toml
-   TELEGRAM_TOKEN = "..."
-   TELEGRAM_ADMIN_CHANNEL_ID = "..."
-   ADMIN_PASSWORD = "..."
-   FIREBASE_SERVICE_ACCOUNT_JSON = """{
-       "type": "...",
-       ...
-   }"""
-   ```
-   - ضع ملف اعتماد Firebase كـ JSON داخل secrets أو استعمل تخزين خارجي آمن.
-5. اضغط Deploy وانتظر حتى يظهر الرابط العام. أي دفع (push) جديد إلى GitHub يعيد النشر تلقائياً.
-
-> راجع الملف `streamlit_secrets_template.toml` كنموذج جاهز لنسخ الأسرار.
-
-### إعداد GitHub سريعاً
-```bash
-git init
-git add .
-git commit -m "Prepare Streamlit deploy"
-git branch -M main
-git remote add origin https://github.com/<USER>/<REPO>.git
-git push -u origin main
-```
-
-> **تذكير:** ملف `.gitignore` جاهز ليتجاهل `.venv`, `.env`, `firebase-credentials.json`, و `.streamlit/`.
-
----
-
-## 🔧 استكشاف الأخطاء
-
-### المشكلة: `'venv' is not recognized`
-**الحل:** تأكد من أنك في المجلد الصحيح وأن `.venv` موجود.
-
-### المشكلة: `streamlit: command not found`
-**الحل:** 
-1. تأكد من تفعيل `.venv`
-2. قم بتثبيت المكتبات: `pip install -r requirements.txt`
-
-### المشكلة: `ModuleNotFoundError`
-**الحل:** 
-```bash
-# تأكد من تفعيل venv ثم:
-pip install -r requirements.txt
-```
-
-### المشكلة: `Permission denied` على Windows
-**الحل:** 
-```powershell
-# في PowerShell كـ Administrator:
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-```
-
----
-
-## 📁 هيكل المشروع
-
-```
-bot/
-├── .venv/              # البيئة الافتراضية
-├── bot.py              # ملف البوت الرئيسي
-├── dashboard.py        # لوحة التحكم (Streamlit)
-├── db.py               # طبقة الوصول للبيانات (Firebase)
-├── strings.py          # النصوص العربية
-├── requirements.txt    # المكتبات المطلوبة
-├── .env                # ملف الإعدادات (يجب إنشاؤه)
-└── firebase-credentials.json  # بيانات Firebase
-```
-
----
-
-## 🎯 سيناريوهات الاستخدام
-
-### السيناريو 1: تشغيل Dashboard فقط
-```bash
-.venv\Scripts\activate
-streamlit run dashboard.py
-```
-
-### السيناريو 2: تشغيل Bot فقط
-```bash
-.venv\Scripts\activate
-python bot.py
-```
-
-### السيناريو 3: تشغيل الاثنين معاً
-افتح **Terminal 1**:
-```bash
-.venv\Scripts\activate
-streamlit run dashboard.py
-```
-
-افتح **Terminal 2**:
-```bash
-.venv\Scripts\activate
+# 4️⃣ Run the bot
 python bot.py
 ```
 
 ---
 
-## ⚠️ ملاحظات مهمة
+## ⚙️ Configuration
 
-1. **لا تنس تفعيل `.venv`** قبل تشغيل أي أمر
-2. **تأكد من وجود ملف `.env`** مع جميع المتغيرات المطلوبة
-3. **Dashboard يعمل على المنفذ 8501** - إذا كان مشغول، سيستخدم 8502 تلقائياً
-4. **Bot يحتاج اتصال بالإنترنت** للاتصال بـ Telegram API و Firebase
+### **Environment Variables**
+
+Create a `.env` file or configure via Streamlit secrets:
+
+```toml
+[telegram]
+bot_token = "YOUR_BOT_TOKEN"
+admin_ids = [123456789]
+
+[database]
+db_path = "bot_database.db"
+
+[firebase]
+# Firebase configuration (optional)
+```
 
 ---
 
-## 🆘 الحصول على المساعدة
+## 🎮 Usage
 
-إذا واجهت أي مشكلة:
-1. تأكد من تفعيل `.venv`
-2. تأكد من تثبيت جميع المكتبات
-3. تحقق من ملف `.env`
-4. راجع رسائل الخطأ في الـ Terminal
+### **For Users**
+
+1. Start a conversation with the bot on Telegram
+2. Navigate through the intuitive menu
+3. Search for subjects and programs
+4. Access university services seamlessly
+
+### **For Administrators**
+
+1. Access the Streamlit dashboard
+2. Monitor bot activity and statistics
+3. Manage database and configurations
+4. View analytics and reports
 
 ---
 
-**آخر تحديث:** 2025-01-19
+## 📁 Project Structure
 
+```
+menouf_bot/
+├── 📄 bot.py                 # Main bot application
+├── 📊 dashboard.py            # Streamlit admin dashboard
+├── 🗄️ db.py                   # Database management
+├── 📝 strings.py              # Localization strings
+├── 🔧 requirements.txt        # Python dependencies
+├── 📖 readme.md              # This file
+└── 📁 .github/               # GitHub workflows
+```
 
+---
+
+## 🚀 Deployment
+
+### **Render.com**
+
+Check out the detailed deployment guide:
+- 📘 [Deployment Guide](DEPLOY_RENDER.md)
+- 🔐 [Environment Variables](RENDER_ENV_VARS.md)
+
+### **Quick Deploy**
+
+```bash
+# Deploy to Render with one click
+# Follow the instructions in DEPLOY_RENDER.md
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to:
+
+1. 🍴 Fork the repository
+2. 🌿 Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. 💾 Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. 📤 Push to the branch (`git push origin feature/AmazingFeature`)
+5. 🔀 Open a Pull Request
+
+---
+
+## 📝 License
+
+This project is licensed under the **MIT License**.
+
+---
+
+## 👨‍💻 Author
+
+<div align="center">
+
+### **Mohamed Omar**
+
+[![GitHub](https://img.shields.io/badge/-GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/3bkader-gpt)
+[![Email](https://img.shields.io/badge/-Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:medo.omar.salama@gmail.com)
+
+---
+
+### ⭐ **Star this repo if you find it helpful!**
+
+<div align="center">
+
+![GitHub stars](https://img.shields.io/github/stars/3bkader-gpt/menouf_bot?style=social)
+![GitHub forks](https://img.shields.io/github/forks/3bkader-gpt/menouf_bot?style=social)
+
+---
+
+**Made with ❤️ by [Mohamed Omar](https://github.com/3bkader-gpt)**
+
+<p align="center">
+  <img src="https://komarev.com/ghpvc/?username=3bkader-gpt&color=blueviolet&style=flat-square" alt="Profile views" />
+</p>
+
+</div>
+
+---
+
+<div align="center">
+
+### 🎉 **Thank you for visiting!**
+
+<p align="center">
+  <img src="https://readme-typing-svg.herokuapp.com?font=Roboto+Slab&color=%237E3ACE&size=20&center=true&vCenter=true&width=500&lines=Happy+Coding!+%F0%9F%9A%80;Keep+Building+Amazing+Things!+%F0%9F%8E%89" alt="Typing SVG" />
+</p>
+
+</div>
