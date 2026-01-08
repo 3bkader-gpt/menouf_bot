@@ -2,7 +2,13 @@
 
 # 🎓 Menouf Bot
 
-### <img src="https://readme-typing-svg.demolab.com?font=Roboto+Slab&color=%237E3ACE&size=30&center=true&vCenter=true&width=500&lines=+Telegram+Bot+for+University+Services;+Modern+%26+Intuitive+Interface;+Built+with+Python+%26+Telegram+API" alt="Typing SVG" />
+### <p align="center">
+  <span style="color: #7E3ACE; font-size: 1.5em; font-weight: bold;">
+    Telegram Bot for University Services<br/>
+    Modern & Intuitive Interface<br/>
+    Built with Python & Telegram API
+  </span>
+</p>
 
 [![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Telegram](https://img.shields.io/badge/Telegram-Bot-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://telegram.org/)
@@ -221,7 +227,10 @@ This project is licensed under the **MIT License**.
 ### 🎉 **Thank you for visiting!**
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Roboto+Slab&color=%237E3ACE&size=20&center=true&vCenter=true&width=500&lines=+Happy+Coding!+%F0%9F%9A%80;+Keep+Building+Amazing+Things!+%F0%9F%8E%89" alt="Typing SVG" />
+  <span style="color: #7E3ACE; font-size: 1.2em;">
+    Happy Coding! 🚀<br/>
+    Keep Building Amazing Things! 🎉
+  </span>
 </p>
 
 </div>
